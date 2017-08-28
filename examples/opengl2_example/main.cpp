@@ -5,11 +5,27 @@
 #include "imgui_impl_glfw.h"
 #include <stdio.h>
 #include <GLFW/glfw3.h>
+#include <windows.h>
+#include "profiler.h"
+
+bool pauseGame = false;
 
 static void error_callback(int error, const char* description)
 {
     fprintf(stderr, "Error %d: %s\n", error, description);
 }
+
+void OnProfilerSetPause(bool pause)
+{
+    pauseGame = pause;
+}
+
+void GameUpdate()
+{
+    ProfileScopedSection(GameUpdate, ImGuiControl::Profiler::Dark);
+    Sleep(2);
+}
+
 
 int main(int, char**)
 {
@@ -34,6 +50,8 @@ int main(int, char**)
     //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
     //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
 
+    ProfileInitialize(&pauseGame, OnProfilerSetPause);
+
     bool show_test_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImColor(114, 144, 154);
@@ -41,6 +59,8 @@ int main(int, char**)
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
+        ProfileNewFrame();
+
         glfwPollEvents();
         ImGui_ImplGlfw_NewFrame();
 
@@ -65,6 +85,8 @@ int main(int, char**)
             ImGui::End();
         }
 
+        ProfileDrawUI();
+
         // 3. Show the ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
         if (show_test_window)
         {
@@ -82,6 +104,8 @@ int main(int, char**)
         ImGui::Render();
         glfwSwapBuffers(window);
     }
+
+    ProfileShutdown();
 
     // Cleanup
     ImGui_ImplGlfw_Shutdown();
